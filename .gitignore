@@ -1,0 +1,4 @@
+nodejs-api/node_modules/
+frontend/node_modules/
+nodejs-api/error.log
+nodejs-api/package-lock.json

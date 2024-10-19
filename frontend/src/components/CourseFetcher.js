@@ -1,22 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { useCourseUrls } from '../context/CourseUrlContext'; // Import the hook
 
-function CourseFetcher({ setCourseUrls, setTotalPages, setCurrentPage, setLoading }) {
+function CourseFetcher({ setTotalPages, setCurrentPage, setLoading, setProgress }) {
   const [cookie, setCookie] = useState('');
   const [pageSize, setPageSize] = useState(10);
+  const intervalIdRef = useRef(null); // Use ref to store interval ID
+
+  const { setCourseUrls } = useCourseUrls(); // Use the hook
 
   const fetchCourses = async () => {
     setLoading(true);
     try {
       const response = await axios.post('http://localhost:3000/api/get_all_udemy_course_list', { cookie });
-      setCourseUrls(response.data.courseUrls);
-      setTotalPages(response.data.total_pages);
+      setTotalPages(response.data.total_pages); 
       setCurrentPage(1);
+      checkProgress();
     } catch (error) {
       console.error('Error fetching courses:', error);
     }
     setLoading(false);
   };
+
+  const checkProgress = () => {
+    // Clear any existing interval to prevent multiple intervals from running
+    if (intervalIdRef.current) clearInterval(intervalIdRef.current);
+
+    const id = setInterval(async () => {
+      try {
+        const progressResponse = await axios.get('http://localhost:3000/api/progress');
+        const progressData = progressResponse.data.udemy;
+
+        if (progressData) {
+          const newCourseUrls = Array.isArray(progressData.course_urls) ? progressData.course_urls : [];
+          setCourseUrls(prevUrls => Array.from(new Set([...prevUrls, ...newCourseUrls])));
+
+          setProgress({
+            total_pages: progressData.total_pages,
+            current_page: progressData.current_page,
+          });
+
+          // Stop checking if the fetching is complete
+          if (progressData.current_page >= progressData.total_pages) {
+            clearInterval(id);
+            intervalIdRef.current = null; // Clear the stored interval ID
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching progress:', error);
+        clearInterval(id);
+      }
+    }, 5000); // Check progress every 5 seconds
+
+    intervalIdRef.current = id; // Store the interval ID
+  };
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (intervalIdRef.current) clearInterval(intervalIdRef.current);
+    };
+  }, []);
 
   return (
     <div className="mb-4">
