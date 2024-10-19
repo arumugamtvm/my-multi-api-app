@@ -1,10 +1,10 @@
-# Use an official Node.js image as a base
+# Use an official node runtime as the base image
 FROM node:14
 
-# Create and set the working directory inside the container
+# Set the working directory
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json to the working directory
+# Copy package.json and package-lock.json (if available)
 COPY package*.json ./
 
 # Install dependencies
@@ -16,5 +16,5 @@ COPY . .
 # Expose the port the app runs on
 EXPOSE 3000
 
-# Define the command to run the application
-CMD ["node", "app.js"]
+# Command to run the application
+CMD ["npm", "start"]
