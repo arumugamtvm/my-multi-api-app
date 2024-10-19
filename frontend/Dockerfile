@@ -1,21 +1,26 @@
-# Dockerfile for Frontend App
-FROM node:18 AS build
+# Build Stage
+FROM node:14 AS build
 
+# Set the working directory
 WORKDIR /app
 
-# Copy and install dependencies
+# Copy package.json and package-lock.json (if available)
 COPY package*.json ./
+
+# Install dependencies
 RUN npm install
 
-# Copy source code
+# Copy the rest of the app
 COPY . .
 
-# Build the frontend app
+# Build the app (this should generate the `dist` folder for production)
 RUN npm run build
 
-# Serve with Nginx (production)
+# Production Stage
 FROM nginx:alpine
+
+# Copy the build artifacts to the nginx server
 COPY --from=build /app/dist /usr/share/nginx/html
 
+# Expose port 80
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
