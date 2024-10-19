@@ -1,0 +1,24 @@
+{
+    "name": "your-app-name",
+    "version": "1.0.0",
+    "description": "Your app description",
+    "main": "app.js",
+    "scripts": {
+      "start": "node app.js",
+      "dev": "nodemon app.js",
+      "pm2:start": "pm2 start app.js --name node-api",  
+      "pm2:stop": "pm2 stop node-api",  
+      "pm2:restart": "pm2 restart node-api", 
+      "pm2:list": "pm2 list" 
+    },
+    "dependencies": {
+      "cors": "^2.8.5",
+      "express": "^4.17.1",
+      "pm2": "^5.2.0",
+      "winston": "^3.3.3"
+    },
+    "devDependencies": {
+      "nodemon": "^2.0.15"
+    }
+  }
+  
