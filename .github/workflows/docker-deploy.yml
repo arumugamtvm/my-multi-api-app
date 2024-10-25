@@ -23,7 +23,7 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
-
+      
       - name: Log in to DockerHub
         uses: docker/login-action@v2
         with:
@@ -40,19 +40,11 @@ jobs:
           docker-compose -f docker-compose.yml build
           docker-compose -f docker-compose.yml push
 
-      - name: Setup SSH Key
-        uses: webfactory/ssh-agent@v0.7.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
       - name: Deploy to Server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          # Add the server's host key to known_hosts to avoid prompts.
-          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-
-          # Execute commands on the remote server using dynamic username and server
-          ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            # Pull the latest images and restart the containers
-            docker-compose -f /path/to/docker-compose.yml pull
-            docker-compose -f /path/to/docker-compose.yml up -d
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          docker-compose -f /path/to/docker-compose.yml pull
+          docker-compose -f /path/to/docker-compose.yml up -d
           EOF
