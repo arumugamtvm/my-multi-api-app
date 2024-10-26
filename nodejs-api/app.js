@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const winston = require('winston');
 const apiRoutes = require('./routes/api');
+require('dotenv').config();
+console.log(process.env.DB_HOST); // 'localhost'
+
 
 const app = express();
 const PORT = 3000;

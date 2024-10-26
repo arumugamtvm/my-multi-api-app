@@ -37,7 +37,7 @@ function logError(message, url, method, payload) {
 // Endpoint to fetch HTML content from the Python API
 async function fetchCourseHTMLFromPython(url) {
     try {
-        const response = await axios.post('http://127.0.0.1:5000/api/extract_website', { url });
+        const response = await axios.post(`${process.env.PythonApiUrl}/api/extract_website`, { url });
         return response.data.html_content;
     } catch (error) {
         logError(error.message, url, 'POST', { url });
@@ -62,7 +62,7 @@ let progressData = {
 // Endpoint to get all Udemy course URLs
 router.post('/get_all_udemy_course_list', async (req, res) => {
     const { cookie } = req.body;
-    const pythonApiUrl = "http://127.0.0.1:5000/api/get_all_udemy_course_list"; 
+    const pythonApiUrl = `${process.env.PythonApiUrl}/api/get_all_udemy_course_list`; 
 
     if (!cookie) {
         return res.status(400).json({ error: 'No cookie provided' });
@@ -95,10 +95,10 @@ router.post('/get_all_udemy_course_list', async (req, res) => {
 // Endpoint to get progress
 router.get('/progress', async (req, res) => {
     try {
-        const progressResponse = await axios.get('http://127.0.0.1:5000/api/progress');
+        const progressResponse = await axios.get(`${process.env.PythonApiUrl}/api/progress`);
         res.json(progressResponse.data);
     } catch (error) {
-        logError(error.message, 'http://127.0.0.1:5000/api/progress', 'GET', {});
+        logError(error.message, `${process.env.PythonApiUrl}/api/progress`, 'GET', {});
         res.status(500).json({ message: 'Error fetching progress', details: error.message });
     }
 });
