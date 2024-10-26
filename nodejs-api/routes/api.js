@@ -2,25 +2,35 @@ const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 const winston = require('winston');
-const logger = winston.createLogger(); // Assuming you configure the logger somewhere globally
+
+// Configure the logger (assumed to be the same instance from app.js)
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.printf(({ timestamp, level, message }) => {
+            return `${timestamp} ${level}: ${message}`;
+        })
+    ),
+    transports: [
+        new winston.transports.File({ filename: 'error.log', level: 'error' }),
+        new winston.transports.Console(),
+    ],
+});
 
 // Function to log API requests in a tabular format
 function logApiRequest(url, method, payload) {
-    const logMessage = `
-    | URL                             | Method | Payload                          |
-    |----------------------------------|--------|----------------------------------|
-    | ${url}                           | ${method} | ${JSON.stringify(payload)}      |
-    `;
+    const logMessage = `| URL                             | Method | Payload                          |\n` +
+        `|----------------------------------|--------|----------------------------------|\n` +
+        `| ${url}                           | ${method} | ${JSON.stringify(payload)}      |`;
     logger.info(logMessage);
 }
 
 // Function to log errors in a tabular format
 function logError(message, url, method, payload) {
-    const errorMessage = `
-    | Error Message                   | URL                             | Method | Payload                          |
-    |----------------------------------|----------------------------------|--------|----------------------------------|
-    | ${message}                      | ${url}                           | ${method} | ${JSON.stringify(payload)}      |
-    `;
+    const errorMessage = `| Error Message                   | URL                             | Method | Payload                          |\n` +
+        `|----------------------------------|----------------------------------|--------|----------------------------------|\n` +
+        `| ${message}                      | ${url}                           | ${method} | ${JSON.stringify(payload)}      |`;
     logger.error(errorMessage);
 }
 
@@ -61,9 +71,7 @@ router.post('/get_all_udemy_course_list', async (req, res) => {
     const cleanedCookie = cookie.replace(/[\n\t]/g, '').replace(/\s+/g, '').trim();
 
     try {
-        const pythonApiResponse = await axios.post(pythonApiUrl, {
-            cookie: cleanedCookie
-        });
+        const pythonApiResponse = await axios.post(pythonApiUrl, { cookie: cleanedCookie });
 
         if (pythonApiResponse.data.error) {
             return res.status(500).json({ message: 'Error from Python API', details: pythonApiResponse.data.error });
@@ -79,6 +87,7 @@ router.post('/get_all_udemy_course_list', async (req, res) => {
         });
 
     } catch (error) {
+        logError(error.message, pythonApiUrl, 'POST', { cookie: cleanedCookie });
         return res.status(500).json({ message: 'Error calling Python API', details: error.message });
     }
 });
@@ -89,6 +98,7 @@ router.get('/progress', async (req, res) => {
         const progressResponse = await axios.get('http://127.0.0.1:5000/api/progress');
         res.json(progressResponse.data);
     } catch (error) {
+        logError(error.message, 'http://127.0.0.1:5000/api/progress', 'GET', {});
         res.status(500).json({ message: 'Error fetching progress', details: error.message });
     }
 });
@@ -96,6 +106,10 @@ router.get('/progress', async (req, res) => {
 // Endpoint to process course URLs
 router.post('/process-courses', async (req, res) => {
     const { courseUrls } = req.body;
+
+    if (!Array.isArray(courseUrls) || courseUrls.length === 0) {
+        return res.status(400).json({ message: 'Invalid or empty course URLs' });
+    }
 
     try {
         const courseDetailsPromises = courseUrls.map(async (url) => {

@@ -1,6 +1,6 @@
 import React from 'react';
 
-function Pagination({ currentPage, totalPages, setCurrentPage }) {
+const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
   const handlePrevious = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
@@ -21,6 +21,6 @@ function Pagination({ currentPage, totalPages, setCurrentPage }) {
       </ul>
     </nav>
   );
-}
+};
 
 export default Pagination;
